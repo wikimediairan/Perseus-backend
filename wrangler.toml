@@ -1,0 +1,14 @@
+name = "perseus-backend"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "perseus-wikimedia-db"
+database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+[vars]
+OPENROUTER_MODEL = "google/gemini-3.5-flash"
+DEFAULT_WEEKLY_TOKEN_LIMIT = "200000"

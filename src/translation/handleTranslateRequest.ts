@@ -1,0 +1,148 @@
+import { type Env, estimateCostUsd } from "@/config/env";
+import type { AuthenticatedUser } from "@/infra/apiKeys";
+import { getQuotaStatus, recordQuotaUsage } from "@/infra/quota";
+import { createOpenRouterTranslate } from "@/provider/openRouter";
+import { PerseusError } from "@/shared/errors";
+import type { Logger } from "@/shared/logger";
+import { type Chunk, chunkTranslationUnits } from "@/translation/chunker";
+import { buildServerPrompt } from "@/translation/prompt";
+import type { TranslatedUnit } from "@/translation/segmentProtocol";
+import { translateChunk } from "@/translation/translateChunk";
+import {
+	type ArticleSourceRef,
+	loadArticleTranslationUnits,
+} from "@/wikimedia/loadArticleUnits";
+
+export interface TranslateRequestInput {
+	source: ArticleSourceRef;
+	chunk: string;
+	targetWiki: string;
+}
+
+export interface TranslatedChunkOut {
+	chunkId: string;
+	units: TranslatedUnit[];
+}
+
+export interface FailedChunkOut {
+	chunkId: string;
+	reason: "provider_error";
+}
+
+export interface SkippedChunkOut {
+	chunkId: string;
+	reason: "quota_exhausted";
+}
+
+export interface TranslateResult {
+	source: ArticleSourceRef;
+	targetWiki: string;
+	totalChunks: number;
+	translated: TranslatedChunkOut[];
+	failed: FailedChunkOut[];
+	skipped: SkippedChunkOut[];
+}
+
+function resolveChunkPlan(chunks: Chunk[], requestedChunk: string): Chunk[] {
+	if (requestedChunk === "all") {
+		return chunks;
+	}
+
+	const match = chunks.find((c) => c.id === requestedChunk);
+
+	if (!match) {
+		throw new PerseusError(
+			"InputError",
+			`Unknown chunk id "${requestedChunk}".`,
+			{ stage: "chunking", context: { notFound: true } },
+		);
+	}
+
+	return [match];
+}
+
+/**
+ * Handles one /v1/translate request: independently re-derives the
+ * article and its chunks from Wikimedia (never from client-supplied
+ * content), resolves which chunk(s) to translate, and translates each
+ * chunk in turn — checking quota before every chunk so a request stops
+ * cleanly partway through rather than overspending, and recording
+ * per-chunk provider failures instead of failing the whole request.
+ */
+export async function handleTranslateRequest(
+	env: Env,
+	logger: Logger,
+	user: AuthenticatedUser,
+	input: TranslateRequestInput,
+): Promise<TranslateResult> {
+	const units = await loadArticleTranslationUnits(input.source, logger);
+	const chunks = chunkTranslationUnits(units);
+	const plan = resolveChunkPlan(chunks, input.chunk);
+
+	// Resolved once, up front, so an unsupported targetWiki is a
+	// whole-request 400 rather than N identical per-chunk failures.
+	const serverPrompt = buildServerPrompt(input.targetWiki);
+	const translate = createOpenRouterTranslate(env);
+
+	const translated: TranslatedChunkOut[] = [];
+	const failed: FailedChunkOut[] = [];
+	const skipped: SkippedChunkOut[] = [];
+
+	// Sequential, not parallel: keeps the per-chunk quota check below
+	// accurate for the next chunk without needing distributed locking.
+	for (const chunk of plan) {
+		const status = await getQuotaStatus(env.DB, user.id, user.weeklyTokenLimit);
+
+		if (status.remainingTokens <= 0) {
+			skipped.push({ chunkId: chunk.id, reason: "quota_exhausted" });
+			logger.info("Chunk skipped: quota exhausted", { chunkId: chunk.id });
+			continue;
+		}
+
+		try {
+			const result = await translateChunk(translate, chunk, serverPrompt);
+			translated.push({ chunkId: result.chunkId, units: result.units });
+
+			if (result.missingUnitIds.length > 0) {
+				logger.warn(
+					"Chunk translated with some units missing from the response",
+					{ chunkId: chunk.id, missingUnitCount: result.missingUnitIds.length },
+				);
+			}
+
+			if (result.usage) {
+				await recordQuotaUsage(
+					env.DB,
+					user.id,
+					result.usage.totalTokens,
+					estimateCostUsd(env, result.usage.totalTokens),
+				);
+			} else {
+				logger.error(
+					"Provider response had no usage data; quota not incremented for this chunk",
+					{ chunkId: chunk.id },
+				);
+			}
+		} catch (err) {
+			if (err instanceof PerseusError && err.category === "ProviderError") {
+				failed.push({ chunkId: chunk.id, reason: "provider_error" });
+				logger.warn("Chunk translation failed (provider error)", {
+					chunkId: chunk.id,
+					stage: err.stage,
+				});
+				continue; // do NOT fail the entire request for a per-chunk provider error
+			}
+			// Any other error (e.g. misconfiguration) is a whole-request failure.
+			throw err;
+		}
+	}
+
+	return {
+		source: input.source,
+		targetWiki: serverPrompt.targetWikiCode,
+		totalChunks: chunks.length,
+		translated,
+		failed,
+		skipped,
+	};
+}

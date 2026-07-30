@@ -1,0 +1,31 @@
+{
+	"name": "perseus-backend",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@11.18.0+sha512.33d83c77da82f49fba836925c6f1b841181ec3132b670639bd012f7075f5c7cf634c5f870147c19aae7478fac01df09d8892e880454896edd23ee9b33757563c",
+	"scripts": {
+		"lint": "biome check --write .",
+		"format": "biome format --write .",
+		"dev": "wrangler dev",
+		"deploy": "wrangler deploy",
+		"typecheck": "tsc --noEmit && tsc --noEmit -p test/tsconfig.json",
+		"db:migrate:local": "wrangler d1 migrations apply perseus-wikimedia-db --local",
+		"db:migrate:remote": "wrangler d1 migrations apply perseus-wikimedia-db --remote",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"hono": "^4.12.32",
+		"linkedom": "^0.18.13",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.5",
+		"@cloudflare/workers-types": "^5.20260728.1",
+		"@types/node": "^26.1.2",
+		"typescript": "^7.0.2",
+		"wrangler": "^4.114.0",
+		"@cloudflare/vitest-pool-workers": "^0.6.4",
+		"vitest": "^2.1.8"
+	}
+}

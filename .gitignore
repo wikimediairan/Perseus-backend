@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Cloudflare
+.wrangler/
+
+# Environment
+.dev.vars
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+coverage/
+.tmp/
+.temp/
+
+# Logs
+*.log
+logs/
+
+# TypeScript
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Keep shared VS Code configuration if you use it
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json

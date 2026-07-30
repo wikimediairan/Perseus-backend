@@ -1,0 +1,1 @@
+export const DEFAULT_MAX_CHUNK_CHARS = 2500;
