@@ -1,9 +1,9 @@
 export interface QuotaStatus {
 	weekStart: string;
-	tokensUsed: number;
-	weeklyLimitTokens: number;
-	remainingTokens: number;
-	resetsAt: string; // ISO 8601, next Monday 00:00 UTC
+	costUsed: number;
+	weeklyLimitCost: number;
+	remainingCost: number;
+	resetsAt: string;
 }
 
 export function mondayOfWeekUtc(date: Date): Date {
@@ -30,25 +30,25 @@ export function nextResetIso(date: Date): string {
 export async function getQuotaStatus(
 	db: D1Database,
 	userId: string,
-	weeklyLimitTokens: number,
+	weeklyLimitCost: number,
 	now: Date = new Date(),
 ): Promise<QuotaStatus> {
 	const weekStart = weekStartKey(now);
 
 	const row = await db
 		.prepare(
-			`SELECT tokens_used AS tokensUsed FROM quota_usage WHERE user_id = ? AND week_start = ?`,
+			`SELECT cost_used AS costUsed FROM quota_usage WHERE user_id = ? AND week_start = ?`,
 		)
 		.bind(userId, weekStart)
-		.first<{ tokensUsed: number }>();
+		.first<{ costUsed: number }>();
 
-	const tokensUsed = row?.tokensUsed ?? 0;
+	const costUsed = row?.costUsed ?? 0;
 
 	return {
 		weekStart,
-		tokensUsed,
-		weeklyLimitTokens,
-		remainingTokens: Math.max(0, weeklyLimitTokens - tokensUsed),
+		costUsed,
+		weeklyLimitCost,
+		remainingCost: Math.max(0, weeklyLimitCost - costUsed),
 		resetsAt: nextResetIso(now),
 	};
 }
@@ -56,23 +56,21 @@ export async function getQuotaStatus(
 export async function recordQuotaUsage(
 	db: D1Database,
 	userId: string,
-	tokensUsed: number,
-	estimatedCostUsd: number,
+	cost: number,
 	now: Date = new Date(),
 ): Promise<void> {
 	const weekStart = weekStartKey(now);
 	const nowIso = now.toISOString();
 
 	await db
-		.prepare(
-			`INSERT INTO quota_usage (user_id, week_start, tokens_used, estimated_cost_usd, chunks_translated, updated_at)
-         VALUES (?, ?, ?, ?, 1, ?)
-         ON CONFLICT(user_id, week_start) DO UPDATE SET
-           tokens_used = tokens_used + excluded.tokens_used,
-           estimated_cost_usd = estimated_cost_usd + excluded.estimated_cost_usd,
-           chunks_translated = chunks_translated + 1,
-           updated_at = excluded.updated_at`,
-		)
-		.bind(userId, weekStart, tokensUsed, estimatedCostUsd, nowIso)
+		.prepare(`
+			INSERT INTO quota_usage (user_id, week_start, cost_used, chunks_translated, updated_at)
+			VALUES (?, ?, ?, 1, ?)
+			ON CONFLICT(user_id, week_start) DO UPDATE SET
+			cost_used = cost_used + excluded.cost_used,
+			chunks_translated = chunks_translated + 1,
+			updated_at = excluded.updated_at
+		`)
+		.bind(userId, weekStart, cost, nowIso)
 		.run();
 }

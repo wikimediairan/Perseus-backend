@@ -10,5 +10,4 @@ database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
 migrations_dir = "migrations"
 
 [vars]
-OPENROUTER_MODEL = "google/gemini-3.5-flash"
-DEFAULT_WEEKLY_TOKEN_LIMIT = "200000"
+DEFAULT_WEEKLY_COST_LIMIT = "0.16"

@@ -21,7 +21,7 @@ export function buildServerPrompt(targetWiki: string): ServerPrompt {
 	}
 
 	const { languageName, domain } = TARGET_WIKIS[targetWiki];
-	const prompt = systemPromptLines(languageName, domain).join("\n");
+	const prompt = systemPromptLines(languageName, domain).join(" ");
 
 	return { prompt, targetWikiCode: targetWiki };
 }

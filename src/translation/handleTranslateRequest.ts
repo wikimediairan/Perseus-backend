@@ -1,11 +1,11 @@
-//? TranslateRequest orchestrator
-import { type Env, estimateCostUsd } from "@/config/env";
+import type { Env } from "@/config/env";
 import type { AuthenticatedUser } from "@/infra/apiKeys";
 import { getQuotaStatus, recordQuotaUsage } from "@/infra/quota";
 import { createOpenRouterTranslate } from "@/provider/openRouter";
 import { PerseusError } from "@/shared/errors";
 import type { Logger } from "@/shared/logger";
 import { type Chunk, chunkTranslationUnits } from "@/translation/chunker";
+import { resolveModel } from "@/translation/model";
 import { buildServerPrompt } from "@/translation/prompt";
 import type { TranslatedUnit } from "@/translation/segmentProtocol";
 import { translateChunk } from "@/translation/translateChunk";
@@ -18,6 +18,7 @@ export interface TranslateRequestInput {
 	source: ArticleSourceRef;
 	chunk: string;
 	targetWiki: string;
+	model: string;
 }
 
 export interface TranslatedChunkOut {
@@ -73,25 +74,29 @@ export async function handleTranslateRequest(
 	const plan = resolveChunkPlan(chunks, input.chunk);
 
 	const serverPrompt = buildServerPrompt(input.targetWiki);
+	const model = resolveModel(input.model);
 	const translate = createOpenRouterTranslate(env);
 
 	const translated: TranslatedChunkOut[] = [];
 	const failed: FailedChunkOut[] = [];
 	const skipped: SkippedChunkOut[] = [];
 
-	// Sequential, not parallel: keeps the per-chunk quota check below
-	// accurate for the next chunk without needing distributed locking.
 	for (const chunk of plan) {
-		const status = await getQuotaStatus(env.DB, user.id, user.weeklyTokenLimit);
+		const status = await getQuotaStatus(env.DB, user.id, user.weeklyCostLimit);
 
-		if (status.remainingTokens <= 0) {
+		if (status.remainingCost <= 0) {
 			skipped.push({ chunkId: chunk.id, reason: "quota_exhausted" });
 			logger.info("Chunk skipped: quota exhausted", { chunkId: chunk.id });
 			continue;
 		}
 
 		try {
-			const result = await translateChunk(translate, chunk, serverPrompt);
+			const result = await translateChunk(
+				translate,
+				chunk,
+				serverPrompt,
+				model,
+			);
 			translated.push({ chunkId: result.chunkId, units: result.units });
 
 			if (result.missingUnitIds.length > 0) {
@@ -101,16 +106,11 @@ export async function handleTranslateRequest(
 				);
 			}
 
-			if (result.usage) {
-				await recordQuotaUsage(
-					env.DB,
-					user.id,
-					result.usage.totalTokens,
-					estimateCostUsd(env, result.usage.totalTokens),
-				);
+			if (result.usage && typeof result.usage.cost === "number") {
+				await recordQuotaUsage(env.DB, user.id, result.usage.cost);
 			} else {
 				logger.error(
-					"Provider response had no usage data; quota not incremented for this chunk",
+					"Provider response had no usage cost; quota not incremented for this chunk",
 					{ chunkId: chunk.id },
 				);
 			}

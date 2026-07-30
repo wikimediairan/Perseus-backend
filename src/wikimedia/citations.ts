@@ -58,7 +58,6 @@ export class CitationRegistry {
 		return def.id;
 	}
 
-	// Registers a citation reference (call site), resolving it against a known definition by name if possible.
 	registerReference(ref: CitationReference): void {
 		let { definitionId } = ref;
 
@@ -93,7 +92,6 @@ export class CitationRegistry {
 		}
 	}
 
-	// Call once after all definitions/references have been registered. Detects definitions nothing points to.
 	finalize(): void {
 		for (const def of this.definitions.values()) {
 			if (def.referencedBy.length === 0) {
@@ -109,12 +107,10 @@ export class CitationRegistry {
 		}
 	}
 
-	// Identifies which citation reference (if any) a given live DOM element corresponds to.
 	findReferenceIdByElement(element: Element): undefined | CitationId {
 		return this.referenceIdByElement.get(element);
 	}
 
-	// Logs every warning recorded so far that hasn't already been logged, then marks them as logged. Safe to call more than once as the registry accumulates warnings.
 	flushWarningsTo(logger: Logger): void {
 		for (let i = this.loggedWarningCount; i < this.warnings.length; i++) {
 			const w = this.warnings[i];
@@ -136,7 +132,6 @@ interface ParsedRefAttrs {
 	malformed: boolean;
 }
 
-// Reads what we need from a ref element's data-mw, tolerating malformed/missing JSON rather than throwing.
 function readRefAttrs(el: Element): ParsedRefAttrs {
 	const dataMw = (el as HTMLElement).dataset.mw;
 
@@ -159,7 +154,6 @@ function readRefAttrs(el: Element): ParsedRefAttrs {
 	}
 }
 
-// Scans `root` for every `<ref>` occurrence and builds a CitationRegistry of definitions/references.
 export function buildCitationRegistry(root: Element): CitationRegistry {
 	const registry = new CitationRegistry();
 
@@ -168,7 +162,6 @@ export function buildCitationRegistry(root: Element): CitationRegistry {
 
 	const refElements = [...root.querySelectorAll(REF_SELECTOR)];
 
-	// Pass 1 — definitions: every occurrence that carries a body. Also registers each defining occurrence as its own reference
 	const definingElements = new Set<Element>();
 
 	for (const el of refElements) {
@@ -204,7 +197,6 @@ export function buildCitationRegistry(root: Element): CitationRegistry {
 		});
 	}
 
-	// Pass 2 — reuses: every occurrence without a body
 	for (const el of refElements) {
 		if (definingElements.has(el)) {
 			continue;

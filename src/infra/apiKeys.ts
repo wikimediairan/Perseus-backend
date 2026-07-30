@@ -1,7 +1,7 @@
 export interface AuthenticatedUser {
 	id: string;
 	label: string | null;
-	weeklyTokenLimit: number;
+	weeklyCostLimit: number;
 }
 
 export async function hashApiKey(plaintextKey: string): Promise<string> {
@@ -20,12 +20,12 @@ export async function findActiveUserByPlaintextKey(
 
 	const row = await db
 		.prepare(`
-			SELECT id, label, weekly_token_limit AS weeklyTokenLimit
+			SELECT id, label, weekly_cost_limit AS weeklyCostLimit
 			FROM api_keys
 			WHERE key_hash = ? AND active = 1
 		`)
 		.bind(keyHash)
-		.first<{ id: string; label: string | null; weeklyTokenLimit: number }>();
+		.first<{ id: string; label: string | null; weeklyCostLimit: number }>();
 
 	if (!row) {
 		return null;
@@ -34,6 +34,6 @@ export async function findActiveUserByPlaintextKey(
 	return {
 		id: row.id,
 		label: row.label,
-		weeklyTokenLimit: row.weeklyTokenLimit,
+		weeklyCostLimit: row.weeklyCostLimit,
 	};
 }

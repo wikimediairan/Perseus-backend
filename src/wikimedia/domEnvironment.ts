@@ -1,4 +1,3 @@
-// Runs `fn` with linkedom's `DOMParser` installed as the global `DOMParser`. (Cloudflare Workers)
 import { DOMParser } from "linkedom";
 
 let holders = 0;

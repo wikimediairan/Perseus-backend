@@ -1,4 +1,5 @@
 import type { Env } from "@/config/env";
+import type { ModelId } from "@/constants/models";
 import {
 	OPENROUTER_CHAT_COMPLETIONS_URL,
 	OPENROUTER_TITLE_HEADER,
@@ -11,12 +12,14 @@ export interface TranslationRequest {
 	systemPrompt: string;
 	sourceText: string;
 	targetLanguage: TargetWikiCode;
+	model: ModelId;
 }
 
 export interface TranslationUsage {
 	promptTokens: number;
 	completionTokens: number;
 	totalTokens: number;
+	cost?: number;
 }
 
 export interface TranslationResult {
@@ -34,6 +37,7 @@ interface ChatCompletionResponse {
 		prompt_tokens?: number;
 		completion_tokens?: number;
 		total_tokens?: number;
+		cost?: number;
 	};
 	error?: {
 		message?: string;
@@ -72,7 +76,6 @@ function isRetryableStatus(status: number): boolean {
 
 export function createOpenRouterTranslate(env: Env): Translate {
 	const apiKey = env.OPENROUTER_API_KEY;
-	const model = env.OPENROUTER_MODEL;
 
 	if (!apiKey) {
 		throw new PerseusError(
@@ -89,21 +92,6 @@ export function createOpenRouterTranslate(env: Env): Translate {
 		);
 	}
 
-	if (!model) {
-		throw new PerseusError(
-			"ConfigurationError",
-			"No model configured for OpenRouter.",
-			{
-				stage: "llm-translation",
-				retryable: false,
-				context: {
-					provider: "openrouter",
-					code: "missing_model",
-				},
-			},
-		);
-	}
-
 	const headers = {
 		"Content-Type": "application/json",
 		Authorization: `Bearer ${apiKey}`,
@@ -112,7 +100,7 @@ export function createOpenRouterTranslate(env: Env): Translate {
 
 	return async (request) => {
 		const payload = {
-			model,
+			model: request.model,
 			messages: [
 				{
 					role: "system",
@@ -151,7 +139,8 @@ export function createOpenRouterTranslate(env: Env): Translate {
 		if (!response.ok) {
 			throw new PerseusError(
 				"ProviderError",
-				body?.error?.message ?? `OpenRouter returned HTTP ${response.status}.`,
+				body?.error?.message ??
+					`OpenRouter request failed (HTTP ${response.status}).`,
 				{
 					stage: "llm-translation",
 					retryable: isRetryableStatus(response.status),
@@ -160,6 +149,7 @@ export function createOpenRouterTranslate(env: Env): Translate {
 						status: response.status,
 						code: body?.error?.code ?? `http_${response.status}`,
 						providerMessage: body?.error?.message ?? rawBody,
+						model: request.model,
 					},
 				},
 			);
@@ -177,6 +167,7 @@ export function createOpenRouterTranslate(env: Env): Translate {
 					context: {
 						provider: "openrouter",
 						code: "empty_response",
+						model: request.model,
 					},
 				},
 			);
@@ -193,8 +184,18 @@ export function createOpenRouterTranslate(env: Env): Translate {
 						promptTokens: usageBody.prompt_tokens,
 						completionTokens: usageBody.completion_tokens,
 						totalTokens: usageBody.total_tokens,
+						...(typeof usageBody.cost === "number"
+							? { cost: usageBody.cost }
+							: {}),
 					}
-				: undefined;
+				: typeof usageBody?.cost === "number"
+					? {
+							promptTokens: 0,
+							completionTokens: 0,
+							totalTokens: 0,
+							cost: usageBody.cost,
+						}
+					: undefined;
 
 		return {
 			translatedText: content,

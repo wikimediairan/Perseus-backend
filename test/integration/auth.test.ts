@@ -8,7 +8,7 @@ describe("auth", () => {
 		await seedApiKey(env, {
 			id: "auth-user",
 			plaintextKey: "sk-persius-authtest",
-			weeklyTokenLimit: 1000,
+			weeklyCostLimit: 1000,
 		});
 	});
 
@@ -46,7 +46,7 @@ describe("auth", () => {
 		await seedApiKey(env, {
 			id: "revoked-user",
 			plaintextKey: "sk-persius-revoked",
-			weeklyTokenLimit: 1000,
+			weeklyCostLimit: 1000,
 			active: false,
 		});
 

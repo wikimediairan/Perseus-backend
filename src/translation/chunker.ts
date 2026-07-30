@@ -6,7 +6,6 @@ export interface Chunk {
 	units: TranslationUnit[];
 }
 
-// Groups translation units into character-limited chunks without splitting individual units.
 export function chunkTranslationUnits(
 	units: TranslationUnit[],
 	maxChunkChars: number = DEFAULT_MAX_CHUNK_CHARS,

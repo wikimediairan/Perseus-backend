@@ -22,24 +22,32 @@ const testChunk: Chunk = {
 	],
 };
 
+const testModel = "google/gemini-2.5-flash" as const;
+
 describe("translateChunk", () => {
-	it("renders the chunk, calls the provider with the server-built prompt, and parses the response back into units", async () => {
+	it("renders the chunk, calls the provider with the server-built prompt and chosen model, and parses the response back into units", async () => {
 		let capturedRequest: TranslationRequest | undefined;
 
 		const translate = stubTranslate((req) => {
 			capturedRequest = req;
 			return {
 				translatedText: "[[SEGMENT 1]]\nBonjour\n\n[[SEGMENT 2]]\nMonde",
-				usage: { promptTokens: 10, completionTokens: 5, totalTokens: 15 },
+				usage: { cost: 0.0002 },
 			};
 		});
 
 		const serverPrompt = buildServerPrompt("fa");
-		const result = await translateChunk(translate, testChunk, serverPrompt);
+		const result = await translateChunk(
+			translate,
+			testChunk,
+			serverPrompt,
+			testModel,
+		);
 
 		expect(capturedRequest?.systemPrompt).toBe(serverPrompt.prompt);
 		expect(capturedRequest?.sourceText).toContain("Hello");
 		expect(capturedRequest?.targetLanguage).toBe("fa");
+		expect(capturedRequest?.model).toBe(testModel);
 
 		expect(result.chunkId).toBe("chunk-1");
 		expect(result.units).toEqual([
@@ -47,11 +55,7 @@ describe("translateChunk", () => {
 			{ nodeId: "n2", sourceText: "World", translatedText: "Monde" },
 		]);
 		expect(result.missingUnitIds).toEqual([]);
-		expect(result.usage).toEqual({
-			promptTokens: 10,
-			completionTokens: 5,
-			totalTokens: 15,
-		});
+		expect(result.usage).toEqual({ cost: 0.0002 });
 	});
 
 	it("reports missing units as partial credit rather than failing the whole chunk", async () => {
@@ -60,7 +64,12 @@ describe("translateChunk", () => {
 		}));
 
 		const serverPrompt = buildServerPrompt("fa");
-		const result = await translateChunk(translate, testChunk, serverPrompt);
+		const result = await translateChunk(
+			translate,
+			testChunk,
+			serverPrompt,
+			testModel,
+		);
 
 		expect(result.units).toEqual([
 			{ nodeId: "n1", sourceText: "Hello", translatedText: "Bonjour" },
@@ -75,7 +84,7 @@ describe("translateChunk", () => {
 
 		const serverPrompt = buildServerPrompt("fa");
 		await expect(
-			translateChunk(translate, testChunk, serverPrompt),
+			translateChunk(translate, testChunk, serverPrompt, testModel),
 		).rejects.toThrow("network exploded");
 	});
 });

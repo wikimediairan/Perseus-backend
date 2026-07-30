@@ -18,11 +18,11 @@ afterEach(() => {
 });
 
 describe("POST /v1/translate", () => {
-	it("full happy path: fetches the real revision, translates via OpenRouter, records quota", async () => {
+	it("full happy path: fetches the real revision, translates via OpenRouter, records quota by cost", async () => {
 		await seedApiKey(env, {
 			id: "translate-user-1",
 			plaintextKey: "sk-persius-translate1",
-			weeklyTokenLimit: 1000,
+			weeklyCostLimit: 0.16,
 		});
 
 		fetchMock
@@ -40,10 +40,7 @@ describe("POST /v1/translate", () => {
 				200,
 				openRouterSuccessBody(
 					"[[SEGMENT 1]]\nBonjour le monde, ceci est un paragraphe de test.",
-					{
-						prompt: 20,
-						completion: 15,
-					},
+					0.02,
 				),
 			);
 
@@ -59,6 +56,7 @@ describe("POST /v1/translate", () => {
 					source: { wiki: "enwiki", pageId: 42, revisionId: 999 },
 					chunk: "all",
 					targetWiki: "fa",
+					model: "google/gemini-2.5-flash",
 				}),
 			},
 			env,
@@ -73,7 +71,7 @@ describe("POST /v1/translate", () => {
 			}[];
 			failed: unknown[];
 			skipped: unknown[];
-			quota: { remainingTokens: number };
+			quota: { remainingCost: number };
 		}>();
 
 		expect(body.totalChunks).toBe(1);
@@ -88,23 +86,58 @@ describe("POST /v1/translate", () => {
 			},
 		]);
 
-		// Quota was decremented by the exact provider-reported total (35 = 20 + 15).
-		expect(body.quota.remainingTokens).toBe(1000 - 35);
+		// Quota was decremented by the exact provider-reported cost.
+		expect(body.quota.remainingCost).toBeCloseTo(0.16 - 0.02, 10);
 
 		const row = await env.DB.prepare(
-			`SELECT tokens_used, chunks_translated FROM quota_usage WHERE user_id = ?`,
+			`SELECT cost_used, chunks_translated FROM quota_usage WHERE user_id = ?`,
 		)
 			.bind("translate-user-1")
-			.first<{ tokens_used: number; chunks_translated: number }>();
-		expect(row?.tokens_used).toBe(35);
+			.first<{ cost_used: number; chunks_translated: number }>();
+		expect(row?.cost_used).toBeCloseTo(0.02, 10);
 		expect(row?.chunks_translated).toBe(1);
+	});
+
+	it("rejects an unsupported model with 400, without calling OpenRouter", async () => {
+		await seedApiKey(env, {
+			id: "translate-user-model",
+			plaintextKey: "sk-persius-translatemodel",
+			weeklyCostLimit: 0.16,
+		});
+
+		fetchMock
+			.get(WIKIMEDIA_ORIGIN)
+			.intercept({ path: "/w/rest.php/v1/revision/5000/html", method: "GET" })
+			.reply(200, fixtureRevisionHtml("Some paragraph text."));
+
+		const res = await app.request(
+			"/v1/translate",
+			{
+				method: "POST",
+				headers: {
+					Authorization: "Bearer sk-persius-translatemodel",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					source: { wiki: "enwiki", pageId: 1, revisionId: 5000 },
+					chunk: "all",
+					targetWiki: "fa",
+					model: "openai/gpt-4o",
+				}),
+			},
+			env,
+		);
+
+		expect(res.status).toBe(400);
+		const body = await res.json<{ error: { category: string } }>();
+		expect(body.error.category).toBe("InputError");
 	});
 
 	it("rejects an unknown chunk id with 404, without calling OpenRouter", async () => {
 		await seedApiKey(env, {
 			id: "translate-user-2",
 			plaintextKey: "sk-persius-translate2",
-			weeklyTokenLimit: 1000,
+			weeklyCostLimit: 0.16,
 		});
 
 		fetchMock
@@ -124,6 +157,7 @@ describe("POST /v1/translate", () => {
 					source: { wiki: "enwiki", pageId: 1, revisionId: 1000 },
 					chunk: "chunk-99",
 					targetWiki: "fa",
+					model: "google/gemini-2.5-flash",
 				}),
 			},
 			env,
@@ -138,7 +172,7 @@ describe("POST /v1/translate", () => {
 		await seedApiKey(env, {
 			id: "translate-user-3",
 			plaintextKey: "sk-persius-translate3",
-			weeklyTokenLimit: 1000,
+			weeklyCostLimit: 0.16,
 		});
 
 		fetchMock
@@ -169,6 +203,7 @@ describe("POST /v1/translate", () => {
 					source: { wiki: "enwiki", pageId: 1, revisionId: 2000 },
 					chunk: "all",
 					targetWiki: "fa",
+					model: "google/gemini-2.5-flash",
 				}),
 			},
 			env,
@@ -189,7 +224,7 @@ describe("POST /v1/translate", () => {
 		await seedApiKey(env, {
 			id: "translate-user-4",
 			plaintextKey: "sk-persius-translate4",
-			weeklyTokenLimit: 1000,
+			weeklyCostLimit: 0.16,
 		});
 
 		fetchMock
@@ -209,6 +244,7 @@ describe("POST /v1/translate", () => {
 					source: { wiki: "enwiki", pageId: 1, revisionId: 3000 },
 					chunk: "all",
 					targetWiki: "klingon",
+					model: "google/gemini-2.5-flash",
 				}),
 			},
 			env,
@@ -221,13 +257,13 @@ describe("POST /v1/translate", () => {
 		await seedApiKey(env, {
 			id: "translate-user-5",
 			plaintextKey: "sk-persius-translate5",
-			weeklyTokenLimit: 10,
+			weeklyCostLimit: 0.01,
 		});
 
 		await env.DB.prepare(
-			`INSERT INTO quota_usage (user_id, week_start, tokens_used, estimated_cost_usd, chunks_translated, updated_at)
-       VALUES (?, ?, 10, 0, 1, ?)
-       ON CONFLICT(user_id, week_start) DO UPDATE SET tokens_used = 10`,
+			`INSERT INTO quota_usage (user_id, week_start, cost_used, chunks_translated, updated_at)
+       VALUES (?, ?, 0.01, 1, ?)
+       ON CONFLICT(user_id, week_start) DO UPDATE SET cost_used = 0.01`,
 		)
 			.bind(
 				"translate-user-5",
@@ -248,6 +284,7 @@ describe("POST /v1/translate", () => {
 					source: { wiki: "enwiki", pageId: 1, revisionId: 4000 },
 					chunk: "all",
 					targetWiki: "fa",
+					model: "google/gemini-2.5-flash",
 				}),
 			},
 			env,

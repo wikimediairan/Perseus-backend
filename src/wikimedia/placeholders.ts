@@ -1,7 +1,5 @@
-//? Flattens a DOM subtree into translatable text while preserving inline markup and citation markers as placeholder tokens.
 import type { CitationRegistry } from "@/wikimedia/citations";
 
-// Inline elements whose text should be translated while preserving the tag.
 const TRANSPARENT_INLINE_TAGS = new Set([
 	"a",
 	"abbr",
@@ -28,7 +26,6 @@ function closeToken(id: number): string {
 	return `\u27EA/${id}\u27EB`;
 }
 
-// Placeholder for a citation marker
 function soloToken(id: number): string {
 	return `\u27EA*${id}\u27EB`;
 }
@@ -66,7 +63,6 @@ export function flattenToPlaceholderText(
 			const id = nextId++;
 
 			if (registry.findReferenceIdByElement(el) === undefined) {
-				// Unexpected: preserve the marker anyway and record the inconsistency.
 				registry.warnings.push({
 					kind: "unsupported-structure",
 					message:
@@ -79,12 +75,10 @@ export function flattenToPlaceholderText(
 		}
 
 		if (isTransclusion(el)) {
-			// Templates are not translatable.
 			return;
 		}
 
 		if (!TRANSPARENT_INLINE_TAGS.has(tag)) {
-			// Skip unsupported inline elements without failing extraction.
 			return;
 		}
 

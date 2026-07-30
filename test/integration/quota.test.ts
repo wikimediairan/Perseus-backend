@@ -8,7 +8,7 @@ describe("GET /v1/quota", () => {
 		await seedApiKey(env, {
 			id: "quota-user",
 			plaintextKey: "sk-persius-quotatest",
-			weeklyTokenLimit: 5000,
+			weeklyCostLimit: 0.16,
 		});
 	});
 
@@ -21,15 +21,15 @@ describe("GET /v1/quota", () => {
 		expect(res.status).toBe(200);
 
 		const body = await res.json<{
-			weeklyLimitTokens: number;
-			usedTokens: number;
-			remainingTokens: number;
+			weeklyLimitCost: number;
+			usedCost: number;
+			remainingCost: number;
 			resetsAt: string;
 		}>();
 
-		expect(body.weeklyLimitTokens).toBe(5000);
-		expect(body.usedTokens).toBe(0);
-		expect(body.remainingTokens).toBe(5000);
+		expect(body.weeklyLimitCost).toBe(0.16);
+		expect(body.usedCost).toBe(0);
+		expect(body.remainingCost).toBe(0.16);
 		expect(new Date(body.resetsAt).getTime()).toBeGreaterThan(Date.now());
 	});
 });

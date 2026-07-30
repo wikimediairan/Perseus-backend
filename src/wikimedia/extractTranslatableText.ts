@@ -11,7 +11,6 @@ export interface TranslationUnit {
 const TRANSLATABLE_BLOCK_SELECTOR =
 	"p, li, dd, dt, th, td, h1, h2, h3, h4, h5, h6, blockquote, figcaption";
 
-// Matches strings with no meaningful letter content (pure numbers, punctuation, or placeholder tokens only)
 const NO_LETTERS = /^\P{L}*$/u;
 
 function isInsideProtectedRegion(el: Element): boolean {
@@ -37,7 +36,6 @@ function isInsideProtectedRegion(el: Element): boolean {
 	return false;
 }
 
-// Extracts translatable text units from Parsoid-rendered HTML, preserving protected markup as placeholders.
 export function extractTranslatableText(
 	html: string,
 	logger?: Logger,

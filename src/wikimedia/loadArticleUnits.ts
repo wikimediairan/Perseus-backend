@@ -14,7 +14,6 @@ export interface ArticleSourceRef {
 	revisionId: number;
 }
 
-// Loads an article's translatable text directly from Wikimedia using its source identifiers.
 export async function loadArticleTranslationUnits(
 	source: ArticleSourceRef,
 	logger: Logger,

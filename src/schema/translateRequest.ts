@@ -9,6 +9,7 @@ export const translateRequestSchema = z.object({
 	}),
 	chunk: z.string().min(1),
 	targetWiki: z.string().min(1),
+	model: z.string().min(1),
 });
 
 export type TranslateRequestBody = z.infer<typeof translateRequestSchema>;

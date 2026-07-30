@@ -4,7 +4,7 @@ import { hashApiKey } from "@/infra/apiKeys";
 export interface SeedApiKeyOptions {
 	id: string;
 	plaintextKey: string;
-	weeklyTokenLimit: number;
+	weeklyCostLimit: number;
 	active?: boolean;
 	label?: string;
 }
@@ -16,7 +16,7 @@ export async function seedApiKey(
 	const keyHash = await hashApiKey(opts.plaintextKey);
 
 	await env.DB.prepare(
-		`INSERT INTO api_keys (id, key_hash, label, active, weekly_token_limit, created_at)
+		`INSERT INTO api_keys (id, key_hash, label, active, weekly_cost_limit, created_at)
      VALUES (?, ?, ?, ?, ?, ?)`,
 	)
 		.bind(
@@ -24,7 +24,7 @@ export async function seedApiKey(
 			keyHash,
 			opts.label ?? null,
 			opts.active === false ? 0 : 1,
-			opts.weeklyTokenLimit,
+			opts.weeklyCostLimit,
 			new Date().toISOString(),
 		)
 		.run();

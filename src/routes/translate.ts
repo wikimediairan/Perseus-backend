@@ -28,7 +28,7 @@ translateRoute.post("/", async (c) => {
 	const finalStatus = await getQuotaStatus(
 		c.env.DB,
 		user.id,
-		user.weeklyTokenLimit,
+		user.weeklyCostLimit,
 	);
 
 	return c.json({
@@ -39,7 +39,7 @@ translateRoute.post("/", async (c) => {
 		failed: result.failed,
 		skipped: result.skipped,
 		quota: {
-			remainingTokens: finalStatus.remainingTokens,
+			remainingCost: finalStatus.remainingCost,
 			resetsAt: finalStatus.resetsAt,
 		},
 	});

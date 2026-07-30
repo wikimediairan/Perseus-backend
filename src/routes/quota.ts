@@ -6,12 +6,12 @@ export const quotaRoute = new Hono<AppEnv>();
 
 quotaRoute.get("/", async (c) => {
 	const user = c.get("user");
-	const status = await getQuotaStatus(c.env.DB, user.id, user.weeklyTokenLimit);
+	const status = await getQuotaStatus(c.env.DB, user.id, user.weeklyCostLimit);
 
 	return c.json({
-		weeklyLimitTokens: status.weeklyLimitTokens,
-		usedTokens: status.tokensUsed,
-		remainingTokens: status.remainingTokens,
+		weeklyLimitCost: status.weeklyLimitCost,
+		usedCost: status.costUsed,
+		remainingCost: status.remainingCost,
 		resetsAt: status.resetsAt,
 	});
 });
