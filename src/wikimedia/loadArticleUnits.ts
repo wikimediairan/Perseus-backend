@@ -8,19 +8,13 @@ import {
 } from "@/wikimedia/extractTranslatableText";
 import { fetchRevisionHtml } from "@/wikimedia/fetchRevision";
 
-/** The only fields the client sends for the article. Never article content. */
 export interface ArticleSourceRef {
 	wiki: string;
 	pageId: number;
 	revisionId: number;
 }
 
-/**
- * Independently reconstructs an article's translatable text straight
- * from Wikimedia — never from anything the client supplied beyond these
- * three identifiers. The backend never uses article text supplied by a
- * client.
- */
+// Loads an article's translatable text directly from Wikimedia using its source identifiers.
 export async function loadArticleTranslationUnits(
 	source: ArticleSourceRef,
 	logger: Logger,

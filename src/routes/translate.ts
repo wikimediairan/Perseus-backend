@@ -24,7 +24,7 @@ translateRoute.post("/", async (c) => {
 
 	const logger = new RequestLogger(requestId);
 	const result = await handleTranslateRequest(c.env, logger, user, parsed.data);
-	
+
 	const finalStatus = await getQuotaStatus(
 		c.env.DB,
 		user.id,

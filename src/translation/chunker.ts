@@ -6,11 +6,7 @@ export interface Chunk {
 	units: TranslationUnit[];
 }
 
-/**
- * Groups translation units into chunks bounded by a character budget, so
- * a single LLM request stays within a reasonable context size. A unit is
- * never split across chunks.
- */
+// Groups translation units into character-limited chunks without splitting individual units.
 export function chunkTranslationUnits(
 	units: TranslationUnit[],
 	maxChunkChars: number = DEFAULT_MAX_CHUNK_CHARS,

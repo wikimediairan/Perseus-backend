@@ -1,27 +1,7 @@
-/**
- * Flattens a block element's content into plain, translatable text.
- *
- * The LLM must receive only human-readable text, never raw markup. A
- * paragraph like `<p>The <a href="./Sun">Sun</a> is a <b>star</b>.</p>`
- * still needs its link label and bold text translated, so instead of
- * stripping inline tags (losing them) or sending raw HTML, this flattens
- * to plain text with lightweight numeric tokens marking where each
- * inline element starts/ends: `The ⟪1⟫Sun⟪/1⟫ is a ⟪2⟫star⟪/2⟫.` The LLM
- * is instructed (see translation/prompt.ts) to keep the tokens as-is.
- *
- * Citation markers get a third, solo kind of token (`⟪*1⟫`) since a
- * footnote marker's visible content is just an auto-numbered "[1]" —
- * there is no wrapped content to translate, only an opaque reference
- * that must be preserved unchanged.
- *
- * Tokens use U+27EA/U+27EB (mathematical angle brackets) specifically
- * because they essentially never occur in ordinary prose, so a token
- * surviving translation unmodified is easy to detect.
- */
-
+//? Flattens a DOM subtree into translatable text while preserving inline markup and citation markers as placeholder tokens.
 import type { CitationRegistry } from "@/wikimedia/citations";
 
-/** Inline elements that are "transparent": their own text is translatable, but the tag itself must be preserved. */
+// Inline elements whose text should be translated while preserving the tag.
 const TRANSPARENT_INLINE_TAGS = new Set([
 	"a",
 	"abbr",
@@ -48,7 +28,7 @@ function closeToken(id: number): string {
 	return `\u27EA/${id}\u27EB`;
 }
 
-/** Solo token for citation markers: no wrapped content, the whole thing is substituted at once. */
+// Placeholder for a citation marker
 function soloToken(id: number): string {
 	return `\u27EA*${id}\u27EB`;
 }
@@ -62,12 +42,6 @@ function isTransclusion(el: Element): boolean {
 	return typeofAttr.split(/\s+/).some((t) => t.startsWith("mw:Transclusion"));
 }
 
-/**
- * Recursively flattens `root`'s child nodes into plain text. Any
- * templated subtree (`typeof~="mw:Transclusion"`) is skipped entirely —
- * neither its tag nor its text becomes translatable content, since
- * templates must remain unchanged.
- */
 export function flattenToPlaceholderText(
 	root: Element,
 	registry: CitationRegistry,
@@ -92,9 +66,7 @@ export function flattenToPlaceholderText(
 			const id = nextId++;
 
 			if (registry.findReferenceIdByElement(el) === undefined) {
-				// Should not normally happen — buildCitationRegistry scans the
-				// same document for every mw:Extension/ref element. Preserve the
-				// marker via its token anyway, and record why this is visible.
+				// Unexpected: preserve the marker anyway and record the inconsistency.
 				registry.warnings.push({
 					kind: "unsupported-structure",
 					message:
@@ -103,16 +75,16 @@ export function flattenToPlaceholderText(
 			}
 
 			text += soloToken(id);
-			return; // never recurse into a citation marker's children
+			return;
 		}
 
 		if (isTransclusion(el)) {
-			// Opaque: skip entirely, do not translate, do not preserve as a placeholder.
+			// Templates are not translatable.
 			return;
 		}
 
 		if (!TRANSPARENT_INLINE_TAGS.has(tag)) {
-			// Unknown/opaque inline-ish tag: skip its content but don't fail the whole block.
+			// Skip unsupported inline elements without failing extraction.
 			return;
 		}
 

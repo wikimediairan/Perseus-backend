@@ -4,7 +4,6 @@ import {
 } from "@/constants/wikimedia";
 import { PerseusError } from "@/shared/errors";
 
-/** Fetches the rendered HTML body for a specific, immutable Wikipedia revision. */
 export async function fetchRevisionHtml(revisionId: number): Promise<string> {
 	const endpoint = `https://${WIKIPEDIA_DOMAIN}/w/rest.php/v1/revision/${revisionId}/html`;
 

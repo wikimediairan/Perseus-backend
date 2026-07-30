@@ -11,12 +11,6 @@ export interface ServerPrompt {
 	targetWikiCode: TargetWikiCode;
 }
 
-/**
- * Validates the client-selected target wiki against the supported
- * registry, then builds the fixed server-side system prompt for it.
- * Takes only `targetWiki` — there is no parameter here through which a
- * client-supplied prompt could be injected.
- */
 export function buildServerPrompt(targetWiki: string): ServerPrompt {
 	if (!isTargetWikiCode(targetWiki)) {
 		throw new PerseusError(
@@ -27,7 +21,7 @@ export function buildServerPrompt(targetWiki: string): ServerPrompt {
 	}
 
 	const { languageName, domain } = TARGET_WIKIS[targetWiki];
-	const prompt = systemPromptLines(languageName, domain).join(" ");
+	const prompt = systemPromptLines(languageName, domain).join("\n");
 
 	return { prompt, targetWikiCode: targetWiki };
 }

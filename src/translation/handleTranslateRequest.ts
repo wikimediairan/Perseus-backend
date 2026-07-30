@@ -1,3 +1,4 @@
+//? TranslateRequest orchestrator
 import { type Env, estimateCostUsd } from "@/config/env";
 import type { AuthenticatedUser } from "@/infra/apiKeys";
 import { getQuotaStatus, recordQuotaUsage } from "@/infra/quota";
@@ -61,14 +62,6 @@ function resolveChunkPlan(chunks: Chunk[], requestedChunk: string): Chunk[] {
 	return [match];
 }
 
-/**
- * Handles one /v1/translate request: independently re-derives the
- * article and its chunks from Wikimedia (never from client-supplied
- * content), resolves which chunk(s) to translate, and translates each
- * chunk in turn — checking quota before every chunk so a request stops
- * cleanly partway through rather than overspending, and recording
- * per-chunk provider failures instead of failing the whole request.
- */
 export async function handleTranslateRequest(
 	env: Env,
 	logger: Logger,
@@ -79,8 +72,6 @@ export async function handleTranslateRequest(
 	const chunks = chunkTranslationUnits(units);
 	const plan = resolveChunkPlan(chunks, input.chunk);
 
-	// Resolved once, up front, so an unsupported targetWiki is a
-	// whole-request 400 rather than N identical per-chunk failures.
 	const serverPrompt = buildServerPrompt(input.targetWiki);
 	const translate = createOpenRouterTranslate(env);
 

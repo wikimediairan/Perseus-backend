@@ -11,7 +11,7 @@ export interface TranslationUnit {
 const TRANSLATABLE_BLOCK_SELECTOR =
 	"p, li, dd, dt, th, td, h1, h2, h3, h4, h5, h6, blockquote, figcaption";
 
-/** Matches strings with no meaningful letter content (pure numbers, punctuation, or placeholder tokens only). */
+// Matches strings with no meaningful letter content (pure numbers, punctuation, or placeholder tokens only)
 const NO_LETTERS = /^\P{L}*$/u;
 
 function isInsideProtectedRegion(el: Element): boolean {
@@ -37,13 +37,7 @@ function isInsideProtectedRegion(el: Element): boolean {
 	return false;
 }
 
-/**
- * Parses Parsoid-rendered HTML for a revision into a flat list of
- * translatable text units, one per eligible block element (paragraphs,
- * list items, table cells, headings, ...). Blocks nested inside another
- * translatable block, or inside a template/citation, are skipped so each
- * unit of text is only sent for translation once.
- */
+// Extracts translatable text units from Parsoid-rendered HTML, preserving protected markup as placeholders.
 export function extractTranslatableText(
 	html: string,
 	logger?: Logger,
