@@ -56,7 +56,7 @@ Request flow: `middleware/requestId` → `middleware/auth` → `middleware/quota
 - **Fixed, server-built prompts**: the system prompt is built server-side from a target-wiki registry; there is no field through which a client can inject or override it.
 - **API key authentication**: static bearer tokens, SHA-256-hashed at rest in D1.
 - **Weekly cost-based quota**: enforced against OpenRouter's own reported `usage.cost` per request.
-- **Interactive API reference**: a hand-authored OpenAPI document rendered with [Scalar](https://scalar.com/) (see [API Documentation (Scalar)](#api-documentation-scalar)).
+- **Interactive API reference**: a hand-authored OpenAPI document rendered with [Scalar](https://scalar.com/).
 
 ## Local Development
 1. Copy the example dev-vars file and fill in a real OpenRouter key:
@@ -73,7 +73,7 @@ Request flow: `middleware/requestId` → `middleware/auth` → `middleware/quota
    pnpm run dev
    ```
    This runs `wrangler dev`, which serves the Worker locally against a local D1 instance.
-4. Open the interactive API reference at `http://localhost:8787/docs` (see [API Documentation (Scalar)](#api-documentation-scalar)).
+4. Open the interactive API reference at `http://localhost:8787/docs`.
 
 ## Environment Variables
 Configuration is split between `wrangler.toml` (`[vars]`, non-secret) and Wrangler secrets (sensitive values). Both are typed together in [`src/config/env.ts`](./src/config/env.ts).
