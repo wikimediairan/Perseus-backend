@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "perseus-wikimedia-db"
-database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
+database_id = "cfc19d67-3206-4b89-a75b-0a5118425bed"
 migrations_dir = "migrations"
 
 [vars]
