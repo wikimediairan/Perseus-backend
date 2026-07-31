@@ -16,18 +16,10 @@ The backend service for **Perseus**, a Wikimedia article translation system. It 
 - [Overview](#overview)
 - [Architecture Summary](#architecture-summary)
 - [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
 - [Local Development](#local-development)
 - [Environment Variables](#environment-variables)
-- [Database Setup & Migrations](#database-setup--migrations)
 - [Deployment](#deployment)
 - [API Overview](#api-overview)
-- [API Documentation (Scalar)](#api-documentation-scalar)
-- [Project Structure](#project-structure)
-- [Logging & Error Handling](#logging--error-handling)
-- [Testing](#testing)
-- [License](#license)
 
 ## Overview
 A client (a Wikimedia-editing tool, in Perseus's case) sends the identifiers for a specific, immutable Wikipedia revision (`wiki`, `pageId`, `revisionId`) - never article content itself.
