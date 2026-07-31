@@ -1,7 +1,7 @@
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 import { SOURCE_WIKI_CODE } from "@/constants/wikimedia";
 
-export const translateRequestSchema = z.object({
+export const translateRequest = z.object({
 	source: z.object({
 		wiki: z.literal(SOURCE_WIKI_CODE),
 		pageId: z.number().int().positive(),
@@ -12,4 +12,4 @@ export const translateRequestSchema = z.object({
 	model: z.string().min(1),
 });
 
-export type TranslateRequestBody = z.infer<typeof translateRequestSchema>;
+export type TranslateRequestType = z.infer<typeof translateRequest>;

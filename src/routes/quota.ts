@@ -1,15 +1,9 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import type { AppEnv } from "@/honoTypes";
 import { getQuotaStatus } from "@/infra/quota";
+import { quotaResponse } from "@/schema/quotaResponse";
 
 export const quotaRoute = new OpenAPIHono<AppEnv>();
-
-const QuotaResponseSchema = z.object({
-	weeklyLimitCost: z.number(),
-	usedCost: z.number(),
-	remainingCost: z.number(),
-	resetsAt: z.iso.datetime(),
-});
 
 const getQuota = createRoute({
 	method: "get",
@@ -23,7 +17,7 @@ const getQuota = createRoute({
 			description: "Quota information",
 			content: {
 				"application/json": {
-					schema: QuotaResponseSchema,
+					schema: quotaResponse,
 				},
 			},
 		},

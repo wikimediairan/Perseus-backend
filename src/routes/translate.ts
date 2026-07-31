@@ -1,29 +1,13 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import type { AppEnv } from "@/honoTypes";
 import { getQuotaStatus } from "@/infra/quota";
-import { translateRequestSchema } from "@/schema/translateRequest";
+import { translateResponse } from "@/schema/TranslateResponse";
+import { translateRequest } from "@/schema/translateRequest";
 import { PerseusError } from "@/shared/errors";
 import { RequestLogger } from "@/shared/logger";
 import { handleTranslateRequest } from "@/translation/handleTranslateRequest";
 
 export const translateRoute = new OpenAPIHono<AppEnv>();
-
-const TranslateResponseSchema = z.object({
-	source: z.object({
-		wiki: z.string(),
-		pageId: z.number(),
-		revisionId: z.number(),
-	}),
-	targetWiki: z.enum(["fa", "tj"]),
-	totalChunks: z.number(),
-	translated: z.array(z.unknown()),
-	failed: z.array(z.unknown()),
-	skipped: z.array(z.unknown()),
-	quota: z.object({
-		remainingCost: z.number(),
-		resetsAt: z.iso.datetime(),
-	}),
-});
 
 const translate = createRoute({
 	method: "post",
@@ -36,7 +20,7 @@ const translate = createRoute({
 			required: true,
 			content: {
 				"application/json": {
-					schema: translateRequestSchema,
+					schema: translateRequest,
 				},
 			},
 		},
@@ -46,7 +30,7 @@ const translate = createRoute({
 			description: "Translation completed",
 			content: {
 				"application/json": {
-					schema: TranslateResponseSchema,
+					schema: translateResponse,
 				},
 			},
 		},
@@ -67,7 +51,7 @@ translateRoute.openapi(translate, async (c) => {
 	const user = c.get("user");
 
 	const json = await c.req.json().catch(() => undefined);
-	const parsed = translateRequestSchema.safeParse(json);
+	const parsed = translateRequest.safeParse(json);
 
 	if (!parsed.success) {
 		throw new PerseusError(
