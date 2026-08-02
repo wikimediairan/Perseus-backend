@@ -1,18 +1,20 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
-
 import type { AppEnv } from "@/honoTypes";
 import { authMiddleware } from "@/middleware/auth";
+import { corsMiddleware } from "@/middleware/cors";
 import { errorHandler } from "@/middleware/errorHandler";
 import { quotaMiddleware } from "@/middleware/quota";
 import { requestIdMiddleware } from "@/middleware/requestId";
+import { healthRoute } from "@/routes/health";
 import { quotaRoute } from "@/routes/quota";
 import { translateRoute } from "@/routes/translate";
-import { healthRoute } from "./routes/health";
 
 const app = new OpenAPIHono<AppEnv>();
 
 app.onError(errorHandler);
+
+app.use("*", corsMiddleware);
 app.use("*", requestIdMiddleware);
 
 app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
