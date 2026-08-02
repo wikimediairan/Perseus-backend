@@ -1,10 +1,16 @@
 export type ModelId =
-	| "google/gemini-3.5-flash"
+	| "deepseek/deepseek-v4-pro"
+	| "openai/gpt-5-mini"
+	| "openai/gpt-5.4-mini"
+	| "z-ai/glm-5.2"
 	| "google/gemini-2.5-flash"
 	| "google/gemini-3.5-flash-light";
 
 export const SUPPORTED_MODELS: readonly ModelId[] = [
-	"google/gemini-3.5-flash",
+	"deepseek/deepseek-v4-pro",
+	"openai/gpt-5-mini",
+	"openai/gpt-5.4-mini",
+	"z-ai/glm-5.2",
 	"google/gemini-2.5-flash",
 	"google/gemini-3.5-flash-light",
 ];
