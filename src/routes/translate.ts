@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
 import type { AppEnv } from "@/honoTypes";
-import { getQuotaStatus } from "@/infra/quota";
+import { getQuotaStatus } from "@/repositories/quota";
 import { translateRequest } from "@/schema/translateRequest";
 import { translateResponse } from "@/schema/translateResponse";
 import { PerseusError } from "@/shared/errors";

@@ -7,7 +7,13 @@ export type PerseusErrorCategory =
 	| "ProviderError"
 	| "ConfigurationError";
 
-export type BackendErrorCategory = "AuthError" | "QuotaExceededError";
+export type BackendErrorCategory =
+	| "AuthError"
+	| "QuotaExceededError"
+	| "RateLimitError"
+	| "NotFoundError"
+	| "ConflictError"
+	| "ForbiddenError";
 
 export type AnyErrorCategory = PerseusErrorCategory | BackendErrorCategory;
 
@@ -79,6 +85,10 @@ export interface ErrorEnvelope {
 const STATUS_BY_CATEGORY: Record<AnyErrorCategory, number> = {
 	AuthError: 401,
 	QuotaExceededError: 429,
+	RateLimitError: 429,
+	NotFoundError: 404,
+	ConflictError: 409,
+	ForbiddenError: 403,
 	InputError: 400,
 	ParsingError: 502,
 	ProviderError: 502,

@@ -1,5 +1,5 @@
 import type { Env } from "@/config/env";
-import { hashApiKey } from "@/infra/apiKeys";
+import { hashApiKey } from "@/repositories/apiKeys";
 
 export interface SeedApiKeyOptions {
 	id: string;

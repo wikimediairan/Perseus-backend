@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import type { AppEnv } from "@/honoTypes";
-import { getQuotaStatus } from "@/infra/quota";
+import { getQuotaStatus } from "@/repositories/quota";
 import { BackendError } from "@/shared/errors";
 
 export const quotaMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {

@@ -1,1 +1,4 @@
+# pnpx wrangler secret put <secret_var>
 OPENROUTER_API_KEY=sk-or-v1-***
+WIKIMEDIA_CONSUMER_KEY=***
+WIKIMEDIA_CONSUMER_SECRET=***

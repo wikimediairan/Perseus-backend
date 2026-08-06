@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 
 const execCommand = promisify(exec);
 
-import { hashApiKey } from "@/infra/apiKeys";
+import { hashApiKey } from "@/repositories/apiKeys";
 
 const DATABASE_NAME = "perseus-wikimedia-db";
 const DEFAULT_WEEKLY_LIMIT = 0.16;

@@ -1,7 +1,7 @@
 import type { Env } from "@/config/env";
-import type { AuthenticatedUser } from "@/infra/apiKeys";
-import { getQuotaStatus, recordQuotaUsage } from "@/infra/quota";
 import { createOpenRouterTranslate } from "@/provider/openRouter";
+import type { AuthenticatedUser } from "@/repositories/apiKeys";
+import { getQuotaStatus, recordQuotaUsage } from "@/repositories/quota";
 import { PerseusError } from "@/shared/errors";
 import type { Logger } from "@/shared/logger";
 import { type Chunk, chunkTranslationUnits } from "@/translation/chunker";
@@ -121,9 +121,8 @@ export async function handleTranslateRequest(
 					chunkId: chunk.id,
 					stage: err.stage,
 				});
-				continue; // do NOT fail the entire request for a per-chunk provider error
+				continue;
 			}
-			// Any other error (e.g. misconfiguration) is a whole-request failure.
 			throw err;
 		}
 	}

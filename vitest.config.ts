@@ -22,6 +22,9 @@ export default defineWorkersConfig(async () => {
 					miniflare: {
 						bindings: {
 							OPENROUTER_API_KEY: "sk-test-not-a-real-key",
+							PUBLIC_BASE_URL: "http://localhost:8787",
+							WIKIMEDIA_CONSUMER_KEY: "test-wikimedia-token",
+							WIKIMEDIA_CONSUMER_SECRET: "test-wikimedia-secret",
 							TEST_MIGRATIONS: migrations,
 						},
 					},

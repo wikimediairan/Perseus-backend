@@ -73,4 +73,11 @@ export async function recordQuotaUsage(
 		`)
 		.bind(userId, weekStart, cost, nowIso)
 		.run();
+
+	await db
+		.prepare(
+			`INSERT INTO usage_events (id, user_id, cost, created_at) VALUES (?, ?, ?, ?)`,
+		)
+		.bind(crypto.randomUUID(), userId, cost, nowIso)
+		.run();
 }

@@ -12,6 +12,8 @@
 		"noEmit": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "hono/jsx",
 		"paths": {
 			"@/*": ["./src/*"]
 		}

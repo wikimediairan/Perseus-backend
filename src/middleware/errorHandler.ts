@@ -14,5 +14,5 @@ export const errorHandler: ErrorHandler<AppEnv> = (err, c) => {
 		...logContext,
 	});
 
-	return c.json(body, status as 400 | 401 | 404 | 429 | 500 | 502);
+	return c.json(body, status as 400 | 401 | 403 | 404 | 409 | 429 | 500 | 502);
 };

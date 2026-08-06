@@ -1,7 +1,4 @@
-import {
-	WIKIMEDIA_REQUEST_HEADERS,
-	WIKIPEDIA_DOMAIN,
-} from "@/constants/wikimedia";
+import { WIKIMEDIA_HEADERS, WIKIPEDIA_DOMAIN } from "@/constants/wikimedia";
 import { PerseusError } from "@/shared/errors";
 
 export async function fetchRevisionHtml(revisionId: number): Promise<string> {
@@ -10,7 +7,9 @@ export async function fetchRevisionHtml(revisionId: number): Promise<string> {
 	let response: Response;
 
 	try {
-		response = await fetch(endpoint, { headers: WIKIMEDIA_REQUEST_HEADERS });
+		response = await fetch(endpoint, {
+			headers: { ...WIKIMEDIA_HEADERS, Accept: "text/html" },
+		});
 	} catch (error) {
 		throw new PerseusError(
 			"ParsingError",

@@ -1,6 +1,6 @@
 import type { MiddlewareHandler } from "hono";
 import type { AppEnv } from "@/honoTypes";
-import { findActiveUserByPlaintextKey } from "@/infra/apiKeys";
+import { findActiveUserByPlaintextKey } from "@/repositories/apiKeys";
 import { BackendError } from "@/shared/errors";
 
 export const authMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {

@@ -1,7 +1,7 @@
 import { env, fetchMock } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import app from "@/index";
-import { weekStartKey } from "@/infra/quota";
+import { weekStartKey } from "@/repositories/quota";
 import {
 	fixtureRevisionHtml,
 	openRouterSuccessBody,

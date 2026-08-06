@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { mondayOfWeekUtc, nextResetIso, weekStartKey } from "@/infra/quota";
+import {
+	mondayOfWeekUtc,
+	nextResetIso,
+	weekStartKey,
+} from "@/repositories/quota";
 
 describe("quota date math", () => {
 	it("anchors to the same Monday for any day within that week", () => {

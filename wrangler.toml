@@ -9,5 +9,18 @@ database_name = "perseus-wikimedia-db"
 database_id = "cfc19d67-3206-4b89-a75b-0a5118425bed"
 migrations_dir = "migrations"
 
+# Static assets (Tailwind CSS output, future images) served directly by
+# the Cloudflare Workers platform -- requests to /static/* never reach the
+# Worker's fetch handler at all. See src/styles/app.css / docs/frontend-rendering.md.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
 [vars]
 DEFAULT_WEEKLY_COST_LIMIT = "0.16"
+# Public base URL Perseus is reachable at; used to build OAuth redirect URIs.
+PUBLIC_BASE_URL = "https://perseus-backend.alireza3205.workers.dev"
+
+# Weekly credit-engine evaluation: every Monday at 04:00 UTC.
+[triggers]
+crons = ["0 4 * * 1"]

@@ -17,6 +17,9 @@ coverage/
 .tmp/
 .temp/
 
+# Generated Tailwind CSS (built via `pnpm run build:css`, see src/styles/app.css)
+public/static/*.css
+
 # Logs
 *.log
 logs/
