@@ -77,7 +77,7 @@ export function DashboardPage({
 
 					{!usage && keyRequestStatus === "not requested" ? (
 						<>
-							<form method="post" action="/api/request-key" class="mt-8">
+							<form hx-post="/api/request-key" hx-swap="outerHTML" class="mt-8">
 								<Button type="submit" variant="primary" class="w-full">
 									درخواست دسترسی
 								</Button>
